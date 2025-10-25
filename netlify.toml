@@ -17,7 +17,7 @@
     Content-Type = "application/json"
 
 [dev]
-  command = "npm run dev --prefix client"
+  command = "npm run dev"
   targetPort = 5173          # Vite dev server
   port = 8888                # Netlify functions server
   framework = "vite"
