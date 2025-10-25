@@ -1,0 +1,24 @@
+[build]
+  functions = "server"       # your serverless functions folder
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/"
+  status = 200
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Content-Type = "application/json"
+
+[dev]
+  command = "npm run dev --prefix client"
+  targetPort = 5173          # Vite dev server
+  port = 8888                # Netlify functions server
+  framework = "vite"
+  autoLaunch = true
