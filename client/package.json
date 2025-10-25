@@ -1,5 +1,6 @@
 {
   "name": "client",
+  "build": "tsc -b && vite build",
   "private": true,
   "version": "0.0.0",
   "type": "module",
