@@ -1,5 +1,5 @@
 [build]
-  functions = "server"       # your serverless functions folder
+  functions = "server/functions"       # your serverless functions folder
 
 [[redirects]]
   from = "/api/*"
