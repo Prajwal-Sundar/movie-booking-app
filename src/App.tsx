@@ -21,8 +21,8 @@ import Error404 from "./errors/Error404";
 
 import { AuthProvider } from "./components/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard"; // Replace with your real component
-// import AdminPanel from "./pages/AdminPanel"; // Replace with your real component
+import Dashboard from "./pages/Dashboard";
+import Theatres from "./pages/Theatres";
 
 // 🧱 Layout wrapper for Header/Footer animations
 const Layout: React.FC = () => {
@@ -30,25 +30,30 @@ const Layout: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* 🔝 Sticky Header */}
       <header className="sticky top-0 z-50 bg-white shadow-md">
         <Header />
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden relative">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+      {/* 🧭 Scrollable Main Section */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
 
-      <footer className="bg-white shadow-inner mt-auto">
+      {/* 🔻 Fixed Footer */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t border-gray-200 z-40">
         <Footer />
       </footer>
     </div>
@@ -84,6 +89,7 @@ const AnimatedRoutes: React.FC = () => {
               path="/admin"
               element={<div>Admin Panel (create this page)</div>}
             />
+            <Route path="/theatres" element={<Theatres />} />
           </Route>
         </Route>
       </Routes>

@@ -21,6 +21,7 @@ export const ApiEndpoint = Object.freeze({
   LOGIN_USER: { url: "loginUser", method: HttpMethod.POST },
 
   // 🎭 Theatres
+  GET_THEATRE_OWNERS: { url: "getTheatreOwners", method: HttpMethod.GET },
   ADD_THEATRE: { url: "addTheatre", method: HttpMethod.POST },
   GET_THEATRES: { url: "getTheatres", method: HttpMethod.GET },
   UPDATE_THEATRE: { url: "updateTheatre", method: HttpMethod.PUT },

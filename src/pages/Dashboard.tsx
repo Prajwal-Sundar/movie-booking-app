@@ -15,6 +15,9 @@ const Dashboard: React.FC = () => {
 
   if (!isAuthenticated) return null; // Prevent flash before redirect
 
+  // 🧠 Role-based rendering logic
+  const isAppOwner = user?.role === "APP_OWNER";
+
   return (
     <motion.div
       className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-10"
@@ -28,7 +31,7 @@ const Dashboard: React.FC = () => {
           User Dashboard
         </h1>
 
-        {/* User Info Card */}
+        {/* 👤 User Info Card */}
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-gray-200 rounded-xl shadow-sm p-6 mb-8 text-center">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Welcome, {user.name || "User"} 👋
@@ -39,26 +42,45 @@ const Dashboard: React.FC = () => {
           </span>
         </div>
 
-        {/* Future Dashboard Sections */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              🎟️ My Bookings
-            </h3>
-            <p className="text-gray-600 text-sm">
-              View and manage your booked shows.
-            </p>
+        {/* 🧭 Role-Based Dashboard Options */}
+        {isAppOwner ? (
+          // 🎭 APP OWNER VIEW
+          <div className="grid grid-cols-1 gap-6">
+            <div
+              onClick={() => navigate("/theatres")}
+              className="cursor-pointer bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition"
+            >
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                🏛️ Theatres
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Organize and manage all theatres registered within the
+                application.
+              </p>
+            </div>
           </div>
+        ) : (
+          // 👥 OTHER USERS VIEW
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                🎟️ My Bookings
+              </h3>
+              <p className="text-gray-600 text-sm">
+                View and manage your booked shows.
+              </p>
+            </div>
 
-          <div className="bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              🏛️ Theatres
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Explore nearby theatres and upcoming shows.
-            </p>
+            <div className="bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                🏛️ Theatres
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Explore nearby theatres and upcoming shows.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );
