@@ -1,3 +1,4 @@
+// src/App.tsx
 import React from "react";
 import {
   BrowserRouter,
@@ -10,9 +11,20 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import Error404 from "./pages/Error404";
 
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Error401 from "./errors/Error401";
+import Error403 from "./errors/Error403";
+import Error404 from "./errors/Error404";
+
+import { AuthProvider } from "./components/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard"; // Replace with your real component
+// import AdminPanel from "./pages/AdminPanel"; // Replace with your real component
+
+// 🧱 Layout wrapper for Header/Footer animations
 const Layout: React.FC = () => {
   const location = useLocation();
 
@@ -43,24 +55,49 @@ const Layout: React.FC = () => {
   );
 };
 
+// 🎬 AnimatedRoutes handles all route transitions
 const AnimatedRoutes: React.FC = () => {
   const location = useLocation();
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route element={<Layout />}>
+          {/* 🌐 Public Routes */}
           <Route index element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* ❌ Error Pages */}
+          <Route path="/401" element={<Error401 />} />
+          <Route path="/403" element={<Error403 />} />
           <Route path="*" element={<Error404 />} />
+
+          {/* 🔒 Authenticated Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/* 🧑‍💼 Role-Protected Routes */}
+          <Route element={<ProtectedRoute requiredRoles={["APP_OWNER"]} />}>
+            <Route
+              path="/admin"
+              element={<div>Admin Panel (create this page)</div>}
+            />
+          </Route>
         </Route>
       </Routes>
     </AnimatePresence>
   );
 };
 
+// 🏁 Main App
 const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <AnimatedRoutes />
+      <AuthProvider>
+        <AnimatedRoutes />
+      </AuthProvider>
     </BrowserRouter>
   );
 };
