@@ -12,7 +12,6 @@ export type HttpMethod = typeof HttpMethod[keyof typeof HttpMethod];
 // ===========================
 // API Endpoints Enum-like Object
 // ===========================
-
 export const ApiEndpoint = Object.freeze({
   // 🩺 Health Check
   HEALTHCHECK: { url: "healthcheck", method: HttpMethod.GET },
@@ -44,23 +43,25 @@ export const ApiEndpoint = Object.freeze({
 export type ApiEndpoint = (typeof ApiEndpoint)[keyof typeof ApiEndpoint];
 
 // ===========================
-// Enhanced API Caller
+// API Response Interface
 // ===========================
-
 export interface ApiResponse<T = any> {
   success: boolean;
   status: number;
   message?: string;
   data?: T;
-  [key: string]: any; // Allow flexible extra fields like token, user, etc.
+  [key: string]: any; // Flexible extra fields like token, user, etc.
 }
 
+// ===========================
+// Enhanced API Caller
+// ===========================
 export async function apiCaller<T = any>(
   endpoint: ApiEndpoint,
   payload?: Record<string, any>
 ): Promise<ApiResponse<T>> {
   const { url, method } = endpoint;
-  const token = localStorage.getItem("authToken"); // ✅ consistent with AuthContext
+  const token = localStorage.getItem("authToken");
   const isGet = method === HttpMethod.GET;
 
   // Construct URL
@@ -82,27 +83,40 @@ export async function apiCaller<T = any>(
 
   try {
     const res = await fetch(finalUrl, options);
-    const contentType = res.headers.get("content-type") || "";
-    const data = contentType.includes("application/json")
-      ? await res.json().catch(() => ({}))
-      : {};
+
+    const rawText = await res.text();
+    let parsed: any = {};
+
+    try {
+      parsed = JSON.parse(rawText);
+    } catch (e) {
+      parsed = { message: rawText };
+    }
+
+    console.groupCollapsed(`📡 API CALL → ${finalUrl}`);
+    console.log("➡️ Method:", method);
+    console.log("➡️ Payload:", payload);
+    console.log("⬅️ Status:", res.status);
+    console.log("⬅️ Raw Text:", rawText);
+    console.log("⬅️ Parsed:", parsed);
+    console.groupEnd();
 
     // ✅ Success
     if (res.ok) {
       return {
         success: true,
         status: res.status,
-        ...data,
+        ...parsed,
       };
     }
 
-    // ❌ Handle known errors
+    // ❌ Known HTTP error handling
     let message =
-      data?.message ||
+      parsed?.message ||
       res.statusText ||
       "An unexpected error occurred. Please try again.";
 
-    if (res.status === 400 && !data.message)
+    if (res.status === 400 && !parsed.message)
       message = "Bad request - Please check your input.";
     else if (res.status === 401)
       message = "Unauthorized - Please login again.";
@@ -117,11 +131,10 @@ export async function apiCaller<T = any>(
       success: false,
       status: res.status,
       message,
-      ...data,
+      ...parsed,
     };
   } catch (error: any) {
-    // 🛑 Network or unexpected runtime error
-    console.error("API Caller Error:", error);
+    console.error("❌ [API Caller] Fatal error:", error);
     return {
       success: false,
       status: 500,
