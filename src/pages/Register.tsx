@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { apiCaller, ApiEndpoint } from "../apiCaller";
@@ -19,12 +19,16 @@ const Register: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // popup now includes title + message so we can keep the title steady
   const [popup, setPopup] = useState({
     show: false,
+    title: "",
     message: "",
     type: "info" as "success" | "error" | "info",
-    showLoginLink: false,
   });
+
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -45,16 +49,20 @@ const Register: React.FC = () => {
   };
 
   const showPopup = (
+    title: string,
     message: string,
-    type: "success" | "error" | "info" = "info",
-    showLoginLink = false
+    type: "success" | "error" | "info" = "info"
   ) => {
-    setPopup({ show: true, message, type, showLoginLink });
+    setPopup({ show: true, title, message, type });
   };
 
   const handleClosePopup = () => {
-    if (popup.type === "success") {
-      window.location.reload(); // Refresh page after successful registration
+    // Close behavior: if success and countdown active, keep it; otherwise hide
+    if (popup.type === "success" && countdown !== null) {
+      // allow countdown flow to handle redirect; just hide if user explicitly closes
+      setPopup((prev) => ({ ...prev, show: false }));
+      setCountdown(null);
+      navigate("/login");
     } else {
       setPopup((prev) => ({ ...prev, show: false }));
     }
@@ -64,22 +72,23 @@ const Register: React.FC = () => {
     e.preventDefault();
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
-      showPopup("Please fill in all required fields.", "error");
+      showPopup("Error", "Please fill in all required fields.", "error");
       return;
     }
 
     if (!isValidEmail(formData.email.trim())) {
-      showPopup("Please enter a valid email address.", "error");
+      showPopup("Error", "Please enter a valid email address.", "error");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      showPopup("Passwords do not match.", "error");
+      showPopup("Error", "Passwords do not match.", "error");
       return;
     }
 
     if (!isStrongPassword(formData.password)) {
       showPopup(
+        "Error",
         "Password must include uppercase, lowercase, number, and special character (min 8 chars).",
         "error"
       );
@@ -96,46 +105,90 @@ const Register: React.FC = () => {
       });
 
       if (res.success) {
-        showPopup(res.message || "Registration successful!", "success", true);
+        // set title separately so it stays visible while message updates
+        setPopup({
+          show: true,
+          title: "Registration successful",
+          message: "Redirecting to login in 3 seconds...",
+          type: "success",
+        });
+        setCountdown(3);
       } else if (res.message === "Email is already registered") {
-        // ⚠️ Custom message with login link
-        showPopup(
-          "Email is already registered!", // <- keep this generic
-          "error",
-          true // show login link
-        );
+        // show error with a link rendered in popup body (handled where the PopupModal is rendered)
+        setPopup({
+          show: true,
+          title: "Registration failed",
+          message: "Email is already registered",
+          type: "error",
+        });
       } else {
-        showPopup(
-          res.message || "An error occurred during registration.",
-          "error"
-        );
+        setPopup({
+          show: true,
+          title: "Registration failed",
+          message: res.message || "An error occurred during registration.",
+          type: "error",
+        });
       }
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
         error.message ||
         "An unexpected error occurred.";
-      showPopup(message, "error");
+      setPopup({
+        show: true,
+        title: "Registration failed",
+        message,
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // ⏳ Countdown logic identical to Login.tsx but updates only message (title stays)
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      setPopup((prev) => ({ ...prev, show: false }));
+      setCountdown(null);
+      navigate("/login");
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => {
+        const next = prev !== null ? prev - 1 : null;
+        if (next !== null) {
+          setPopup((prevPopup) => ({
+            ...prevPopup,
+            message: `Redirecting to login in ${next} second${
+              next !== 1 ? "s" : ""
+            }...`,
+          }));
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown, navigate]);
+
   return (
     <>
       <PopupModal
         show={popup.show}
+        title={popup.title}
         message={popup.message}
         type={popup.type}
         onClose={handleClosePopup}
       >
-        {popup.showLoginLink &&
-        popup.message === "Email is already registered!" ? (
+        {/* Special handling for duplicate-email to show the clickable 'here' link */}
+        {popup.message === "Email is already registered" ? (
           <p className="text-center text-sm text-gray-800 whitespace-pre-line">
             Email is already registered with us — Please{" "}
             <span
               onClick={() => {
-                handleClosePopup();
+                setPopup((prev) => ({ ...prev, show: false }));
                 navigate("/login");
               }}
               className="text-pink-500 font-semibold cursor-pointer hover:underline"
@@ -144,11 +197,7 @@ const Register: React.FC = () => {
             </span>{" "}
             to login, or use an alternate email address to register.
           </p>
-        ) : (
-          <p className="text-center text-sm text-gray-800 whitespace-pre-line">
-            {popup.message}
-          </p>
-        )}
+        ) : null}
       </PopupModal>
 
       <motion.div
@@ -164,7 +213,7 @@ const Register: React.FC = () => {
           </h1>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Name */}
+            {/* Full Name */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Full Name
@@ -207,8 +256,6 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
               />
-
-              {/* Fancy toggle switch */}
               <label className="flex items-center gap-3 mt-2 cursor-pointer select-none">
                 <div
                   onClick={() => setShowPassword((prev) => !prev)}
@@ -241,8 +288,6 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
               />
-
-              {/* Fancy toggle switch */}
               <label className="flex items-center gap-3 mt-2 cursor-pointer select-none">
                 <div
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
