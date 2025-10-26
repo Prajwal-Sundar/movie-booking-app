@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import Profile from "./Profile";
 import { FaUserCircle } from "react-icons/fa";
 
@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   const location = useLocation();
 
   const token = localStorage.getItem("authToken");
-  const userName = token ? "John Doe" : null;
+  const userName = token ? "XYZ" : null;
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
@@ -20,27 +20,30 @@ const Header: React.FC = () => {
   }, [location]);
 
   return (
-    <header className="bg-gray-900 text-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between p-4 relative">
-        {/* Centered Brand with premium underline effect */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <span className="text-2xl font-bold text-red-500 relative group cursor-pointer">
-            Movie Booking App
-            <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-red-500 transition-all group-hover:w-full"></span>
-          </span>
-        </div>
+    <header className="bg-gray-900 text-white shadow-md sticky top-0 z-50 w-full">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 relative">
+        {/* Brand Section */}
+        <Link
+          to="/"
+          className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 bg-clip-text text-transparent hover:opacity-90 transition"
+        >
+          MovieBookingApp
+        </Link>
 
-        {/* Right Profile Circle */}
-        <div className="ml-auto relative">
+        {/* Profile Section */}
+        <div className="relative">
           <button
-            className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white hover:bg-gray-700 transition-shadow transition-colors shadow-sm hover:shadow-lg"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-800 flex items-center justify-center text-white hover:bg-gray-700 transition-shadow shadow-sm hover:shadow-lg focus:outline-none"
             onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            <FaUserCircle className="text-2xl" />
+            <FaUserCircle className="text-xl sm:text-2xl" />
           </button>
 
+          {/* Dropdown */}
           {dropdownOpen && (
-            <Profile userName={userName} onLogout={handleLogout} />
+            <div className="absolute right-0 mt-2 w-40 sm:w-48 bg-white text-gray-800 rounded-lg shadow-xl border border-gray-200 z-50">
+              <Profile userName={userName} onLogout={handleLogout} />
+            </div>
           )}
         </div>
       </div>
