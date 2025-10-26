@@ -17,6 +17,7 @@ const Dashboard: React.FC = () => {
 
   // 🧠 Role-based rendering logic
   const isAppOwner = user?.role === "APP_OWNER";
+  const isTheatreOwner = user?.role === "THEATRE_OWNER";
 
   return (
     <motion.div
@@ -56,6 +57,22 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-600 text-sm">
                 Organize and manage all theatres registered within the
                 application.
+              </p>
+            </div>
+          </div>
+        ) : isTheatreOwner ? (
+          // 🎬 THEATRE OWNER VIEW
+          <div className="grid grid-cols-1 gap-6">
+            <div
+              onClick={() => navigate("/shows")}
+              className="cursor-pointer bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition"
+            >
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                🎬 Shows
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Organize and manage all shows registered with theatres owned by
+                you.
               </p>
             </div>
           </div>

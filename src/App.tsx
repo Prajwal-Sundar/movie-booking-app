@@ -23,6 +23,7 @@ import { AuthProvider } from "./components/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Theatres from "./pages/Theatres";
+import Shows from "./pages/Shows";
 
 // 🧱 Layout wrapper for Header/Footer animations
 const Layout: React.FC = () => {
@@ -85,11 +86,11 @@ const AnimatedRoutes: React.FC = () => {
 
           {/* 🧑‍💼 Role-Protected Routes */}
           <Route element={<ProtectedRoute requiredRoles={["APP_OWNER"]} />}>
-            <Route
-              path="/admin"
-              element={<div>Admin Panel (create this page)</div>}
-            />
             <Route path="/theatres" element={<Theatres />} />
+          </Route>
+
+          <Route element={<ProtectedRoute requiredRoles={["THEATRE_OWNER"]} />}>
+            <Route path="/shows" element={<Shows />} />
           </Route>
         </Route>
       </Routes>

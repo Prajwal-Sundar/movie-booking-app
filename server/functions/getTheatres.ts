@@ -4,16 +4,23 @@ import Theatre from "../models/theatre";
 import { withAuth } from "../withAuth";
 import { Role } from "../models/user";
 
-const getTheatres: Handler = async () => {
+const getTheatres: Handler = async (event) => {
   try {
     await connectDB();
 
-    // 🎭 Fetch all theatres and include owner info
-    const theatres = await Theatre.find()
+    // 🧩 Read optional ownerId query param
+    const params = event.queryStringParameters || {};
+    const ownerId = params.ownerId;
+
+    // 🎭 Build query conditionally
+    const query = ownerId ? { ownerId } : {};
+
+    // 🏛️ Fetch theatres (filtered if ownerId provided)
+    const theatres = await Theatre.find(query)
       .populate("ownerId", "name email role")
       .lean();
 
-    // 🧩 Rename `ownerId` → `owner` for frontend clarity
+    // 🧠 Rename ownerId → owner for frontend clarity
     const formatted = theatres.map(({ ownerId, ...rest }) => ({
       ...rest,
       owner: ownerId,
@@ -23,7 +30,9 @@ const getTheatres: Handler = async () => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        message: "Theatres retrieved successfully.",
+        message: ownerId
+          ? `Theatres owned by ${ownerId} retrieved successfully.`
+          : "All theatres retrieved successfully.",
         data: formatted,
       }),
     };
@@ -40,6 +49,7 @@ const getTheatres: Handler = async () => {
   }
 };
 
+// ✅ Keep same roles (backward compatible)
 export const handler = withAuth(getTheatres, {
   roles: [Role.APP_OWNER, Role.THEATRE_OWNER, Role.USER],
 });

@@ -18,9 +18,9 @@ const Profile: React.FC<ProfileProps> = ({
 
   const displayRole =
     userRole === "APP_OWNER"
-      ? "Owner"
-      : userRole === "ADMIN"
-      ? "Admin"
+      ? "App Owner"
+      : userRole === "THEATRE_OWNER"
+      ? "Theatre Owner"
       : userRole === "USER"
       ? "User"
       : null;
