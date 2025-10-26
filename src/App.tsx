@@ -24,6 +24,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Theatres from "./pages/Theatres";
 import Shows from "./pages/Shows";
+import AllShows from "./pages/AllShows";
+import Book from "./pages/Book";
 
 // 🧱 Layout wrapper for Header/Footer animations
 const Layout: React.FC = () => {
@@ -91,6 +93,12 @@ const AnimatedRoutes: React.FC = () => {
 
           <Route element={<ProtectedRoute requiredRoles={["THEATRE_OWNER"]} />}>
             <Route path="/shows" element={<Shows />} />
+          </Route>
+
+          <Route element={<ProtectedRoute requiredRoles={["USER"]} />}>
+            <Route path="/allshows" element={<AllShows />} />
+            <Route path="/book/:showId" element={<Book />} />
+            <Route path="/bookings" element={<Shows />} />
           </Route>
         </Route>
       </Routes>

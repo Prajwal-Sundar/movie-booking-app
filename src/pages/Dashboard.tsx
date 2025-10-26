@@ -13,9 +13,8 @@ const Dashboard: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  if (!isAuthenticated) return null; // Prevent flash before redirect
+  if (!isAuthenticated) return null;
 
-  // 🧠 Role-based rendering logic
   const isAppOwner = user?.role === "APP_OWNER";
   const isTheatreOwner = user?.role === "THEATRE_OWNER";
 
@@ -77,23 +76,31 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          // 👥 OTHER USERS VIEW
+          // 👥 NORMAL USER VIEW
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition">
+            {/* 🎟️ All Shows */}
+            <div
+              onClick={() => navigate("/allshows")}
+              className="cursor-pointer bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition"
+            >
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                🎟️ My Bookings
+                🎥 All Shows
               </h3>
               <p className="text-gray-600 text-sm">
-                View and manage your booked shows.
+                Browse through all available shows and book your favorite ones.
               </p>
             </div>
 
-            <div className="bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition">
+            {/* 📅 My Bookings */}
+            <div
+              onClick={() => navigate("/bookings")}
+              className="cursor-pointer bg-gray-100 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition"
+            >
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                🏛️ Theatres
+                📅 My Bookings
               </h3>
               <p className="text-gray-600 text-sm">
-                Explore nearby theatres and upcoming shows.
+                View all your bookings and check your upcoming show schedules.
               </p>
             </div>
           </div>

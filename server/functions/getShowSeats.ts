@@ -2,8 +2,7 @@ import { Handler } from '@netlify/functions';
 import { connectDB } from '../connection';
 import { Show, Theatre, Booking } from '../models';
 import mongoose from 'mongoose';
-
-import { withAuth } from '../withAuth'
+import { withAuth } from '../withAuth';
 import { Role } from '../models/user';
 
 async function getShowSeats(event: any) {
@@ -11,30 +10,74 @@ async function getShowSeats(event: any) {
 
   const { showId } = event.queryStringParameters || {};
   if (!showId || !mongoose.Types.ObjectId.isValid(showId)) {
-    return { statusCode: 400, body: 'Invalid showId' };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        success: false,
+        message: 'Invalid showId',
+      }),
+    };
   }
 
+  // ✅ Only populate theatre — no movie populate
   const show = await Show.findById(showId).populate('theatre');
-  if (!show) return { statusCode: 404, body: 'Show not found' };
+  if (!show) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({
+        success: false,
+        message: 'Show not found',
+      }),
+    };
+  }
 
+  // ✅ Get all bookings for this show
   const bookings = await Booking.find({ show: show._id });
   const bookedSeats = bookings.flatMap((b) => b.seats);
 
+  // ✅ Extract theatre details
   const theatre: any = show.theatre;
-  const totalSeats: string[] = [];
-  theatre.screens
-    .filter((s: any) => s.screenNumber === show.screenNumber)
-    .forEach((screen: any) => {
-      for (let r = 0; r < screen.rows; r++) {
-        for (let c = 0; c < screen.cols; c++) {
-          totalSeats.push(`${String.fromCharCode(65 + r)}${c + 1}`);
-        }
-      }
-    });
+  const screen = theatre.screens?.find(
+    (s: any) => s.screenNumber === show.screenNumber
+  );
 
-  const availableSeats = totalSeats.filter((seat) => !bookedSeats.includes(seat));
+  if (!screen) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({
+        success: false,
+        message: 'Screen not found in theatre',
+      }),
+    };
+  }
 
-  return { statusCode: 200, body: JSON.stringify({ bookedSeats, availableSeats }) };
-};
+  // ✅ Convert seat labels like "B5" into 2D grid coordinates
+  const bookedSeatLocations: number[][] = bookedSeats.map((seatLabel: string) => {
+    const rowChar = seatLabel[0].toUpperCase();
+    const rowIndex = rowChar.charCodeAt(0) - 65;
+    const colIndex = parseInt(seatLabel.slice(1)) - 1;
+    return [rowIndex, colIndex];
+  });
 
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      success: true,
+      message: 'All seats retrieved successfully.',
+      rows: screen.rows,
+      columns: screen.cols,
+      bookedSeats: bookedSeatLocations,
+
+      // ✅ Include extra show/theatre info
+      movieName: show.movieName || 'Unknown Movie',
+      showTime: show.time || 'Unknown Time',
+      showDate: show.date || null,
+      theatreName: theatre?.name || 'Unknown Theatre',
+      theatreLocation: theatre?.location || 'Unknown Location',
+      screenNumber: show.screenNumber || 1,
+    }),
+  };
+}
+
+// ✅ Keep withAuth wrapper for token validation
 export const handler = withAuth(getShowSeats, { roles: [Role.USER] });
