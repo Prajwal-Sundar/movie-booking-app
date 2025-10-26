@@ -26,6 +26,8 @@ import Theatres from "./pages/Theatres";
 import Shows from "./pages/Shows";
 import AllShows from "./pages/AllShows";
 import Book from "./pages/Book";
+import Booking from "./pages/Booking";
+import Bookings from "./pages/Bookings";
 
 // 🧱 Layout wrapper for Header/Footer animations
 const Layout: React.FC = () => {
@@ -98,7 +100,8 @@ const AnimatedRoutes: React.FC = () => {
           <Route element={<ProtectedRoute requiredRoles={["USER"]} />}>
             <Route path="/allshows" element={<AllShows />} />
             <Route path="/book/:showId" element={<Book />} />
-            <Route path="/bookings" element={<Shows />} />
+            <Route path="/booking/:bookingId" element={<Booking />} />
+            <Route path="/bookings" element={<Bookings />} />
           </Route>
         </Route>
       </Routes>

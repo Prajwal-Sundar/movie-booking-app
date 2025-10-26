@@ -38,6 +38,7 @@ export const ApiEndpoint = Object.freeze({
   GET_SHOW_SEATS: { url: "getShowSeats", method: HttpMethod.GET },
   BOOK_SEATS: { url: "bookSeats", method: HttpMethod.POST },
   GET_USER_BOOKINGS: { url: "getUserBookings", method: HttpMethod.GET },
+  GET_BOOKING: { url: "getBooking", method: HttpMethod.GET },
   CANCEL_BOOKING: { url: "cancelBooking", method: HttpMethod.DELETE },
 } as const);
 

@@ -15,6 +15,7 @@ async function getUserBookings(event: any) {
   }
 
   const bookings = await Booking.find({ user: userId }).populate('show');
+  console.log(bookings);
   return { statusCode: 200, body: JSON.stringify(bookings) };
 };
 
