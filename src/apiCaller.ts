@@ -39,7 +39,7 @@ export const ApiEndpoint = Object.freeze({
   BOOK_SEATS: { url: "bookSeats", method: HttpMethod.POST },
   GET_USER_BOOKINGS: { url: "getUserBookings", method: HttpMethod.GET },
   GET_BOOKING: { url: "getBooking", method: HttpMethod.GET },
-  CANCEL_BOOKING: { url: "cancelBooking", method: HttpMethod.DELETE },
+  CANCEL_BOOKING: { url: "cancelBooking", method: HttpMethod.POST },
 } as const);
 
 export type ApiEndpoint = (typeof ApiEndpoint)[keyof typeof ApiEndpoint];

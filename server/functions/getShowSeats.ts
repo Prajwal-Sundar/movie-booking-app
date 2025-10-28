@@ -32,7 +32,7 @@ async function getShowSeats(event: any) {
   }
 
   // ✅ Get all bookings for this show
-  const bookings = await Booking.find({ show: show._id });
+  const bookings = await Booking.find({ show: show._id, isCancelled: false });
   const bookedSeats = bookings.flatMap((b) => b.seats);
 
   // ✅ Extract theatre details

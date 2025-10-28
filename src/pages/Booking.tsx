@@ -23,6 +23,7 @@ interface BookingData {
     theatre?: string;
   };
   seats: string[];
+  isCancelled?: boolean;
 }
 
 const Booking: React.FC = () => {
@@ -37,6 +38,7 @@ const Booking: React.FC = () => {
     type: "info" as "success" | "error" | "info",
     title: "",
     message: "",
+    children: null as React.ReactNode,
   });
 
   const fetchBooking = async () => {
@@ -49,6 +51,7 @@ const Booking: React.FC = () => {
         type: "error",
         title: "Not Logged In",
         message: "Please log in to view booking details.",
+        children: null,
       });
       return;
     }
@@ -60,34 +63,36 @@ const Booking: React.FC = () => {
         userId: user.id,
       });
 
-      const booking = response?.data?.data || response?.data || response;
+      const booking =
+        response?.data?.data || response?.data || response || null;
 
       if (booking && booking.success && booking.data) {
         setBookingData(booking.data);
       } else if (booking && booking._id) {
         setBookingData(booking);
+      } else if (booking && booking.success && booking.booking) {
+        setBookingData(booking.booking);
       } else {
         setPopup({
           show: true,
           type: "error",
           title: "Booking Not Found",
           message: "Booking details could not be found.",
+          children: null,
         });
       }
     } catch (err: any) {
       console.error("❌ Error fetching booking:", err);
-
-      // 🚨 If backend returns 403, redirect to /403
       if (err?.response?.status === 403) {
         navigate("/403");
         return;
       }
-
       setPopup({
         show: true,
         type: "error",
         title: "Network Error",
         message: "Unable to fetch booking details.",
+        children: null,
       });
     } finally {
       setLoading(false);
@@ -120,7 +125,111 @@ const Booking: React.FC = () => {
     }
   };
 
-  // QR data - compact and readable
+  // Cancel booking handler (calls API)
+  const handleCancelBooking = async () => {
+    if (!bookingId) return;
+    try {
+      setPopup({
+        show: true,
+        type: "info",
+        title: "Cancelling...",
+        message: "Please wait while we cancel your booking.",
+        children: null,
+      });
+
+      const res = await apiCaller<any>(ApiEndpoint.CANCEL_BOOKING, {
+        bookingId,
+      });
+
+      const success =
+        (res && res.data && res.data.success === true) ||
+        (res && res.success === true);
+
+      if (success) {
+        const updatedBooking = res?.data?.booking || res?.booking || null;
+
+        if (updatedBooking) {
+          setBookingData((prev) => ({
+            ...(prev || {}),
+            ...(updatedBooking as any),
+          }));
+        } else {
+          setBookingData((prev) =>
+            prev ? { ...prev, isCancelled: true } : prev
+          );
+        }
+
+        // countdown for refresh
+        let seconds = 3;
+        setPopup({
+          show: true,
+          type: "success",
+          title: "Cancellation Successful!",
+          message: `Your booking has been cancelled. The page will refresh in ${seconds} seconds.`,
+          children: null,
+        });
+
+        const interval = setInterval(() => {
+          seconds--;
+          if (seconds > 0) {
+            setPopup((prev) => ({
+              ...prev,
+              message: `Your booking has been cancelled. The page will refresh in ${seconds} seconds.`,
+            }));
+          } else {
+            clearInterval(interval);
+            window.location.reload();
+          }
+        }, 1000);
+      } else {
+        setPopup({
+          show: true,
+          type: "error",
+          title: "Cancellation Failed",
+          message: res?.data?.message || "Unable to cancel booking.",
+          children: null,
+        });
+      }
+    } catch (err) {
+      console.error("❌ Cancel booking failed:", err);
+      setPopup({
+        show: true,
+        type: "error",
+        title: "Cancellation Failed",
+        message: "Unable to cancel booking.",
+        children: null,
+      });
+    }
+  };
+
+  const confirmCancel = () => {
+    setPopup({
+      show: true,
+      type: "info",
+      title: "Confirm Cancellation",
+      message: "Are you sure you want to cancel this booking?",
+      children: (
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            onClick={() => {
+              setPopup((p) => ({ ...p, show: false }));
+              setTimeout(() => handleCancelBooking(), 150);
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl font-semibold transition-all"
+          >
+            Yes, Cancel
+          </button>
+          <button
+            onClick={() => setPopup((p) => ({ ...p, show: false }))}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded-xl font-semibold transition-all"
+          >
+            No, Go Back
+          </button>
+        </div>
+      ),
+    });
+  };
+
   const qrData =
     bookingData &&
     `🎬 ${bookingData.show.movieName}\n🕒 ${formatDateTime(
@@ -149,7 +258,6 @@ const Booking: React.FC = () => {
             </p>
           ) : bookingData ? (
             <div className="flex flex-col items-center space-y-6">
-              {/* Movie Info */}
               <div className="text-center">
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center justify-center gap-2">
                   <Film className="w-6 h-6 text-purple-500" />
@@ -160,7 +268,6 @@ const Booking: React.FC = () => {
                 </p>
               </div>
 
-              {/* Ticket details */}
               <div className="bg-gradient-to-r from-purple-100 via-pink-100 to-red-100 rounded-xl p-5 w-full text-gray-700 shadow-inner space-y-3">
                 <div className="flex justify-between">
                   <span className="flex items-center gap-2 font-medium">
@@ -193,16 +300,37 @@ const Booking: React.FC = () => {
                 </div>
               </div>
 
-              {/* QR Code */}
+              {/* QR + Cancel UI */}
               <div className="bg-gray-50 p-4 rounded-xl shadow-md text-center">
-                <QRCode
-                  value={qrData || "No booking info"}
-                  size={160}
-                  style={{ height: "auto", maxWidth: "100%", width: "160px" }}
-                />
+                <div className="flex justify-center">
+                  <QRCode
+                    value={qrData || "No booking info"}
+                    size={160}
+                    style={{ height: "auto", maxWidth: "100%", width: "160px" }}
+                  />
+                </div>
+
                 <p className="text-sm text-gray-500 mt-2">
                   Scan for ticket details
                 </p>
+
+                {bookingData.isCancelled ? (
+                  <div className="mt-4 flex flex-col items-center gap-2">
+                    <p className="text-red-600 font-bold text-xl">
+                      🚫 BOOKING CANCELLED
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      This booking will not be valid for entry.
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={confirmCancel}
+                    className="mt-4 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl font-semibold transition-all"
+                  >
+                    Cancel Ticket
+                  </button>
+                )}
               </div>
 
               <div className="w-full h-[2px] bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-full" />
@@ -224,7 +352,9 @@ const Booking: React.FC = () => {
         message={popup.message}
         type={popup.type}
         onClose={() => setPopup({ ...popup, show: false })}
-      />
+      >
+        {popup.children}
+      </PopupModal>
     </>
   );
 };

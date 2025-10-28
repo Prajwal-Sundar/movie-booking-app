@@ -13,6 +13,7 @@ interface Booking {
     date: string;
     time: string;
   };
+  isCancelled?: boolean; // 🆕 added field
 }
 
 const Bookings: React.FC = () => {
@@ -47,10 +48,8 @@ const Bookings: React.FC = () => {
 
       console.log("✅ Raw backend response:", response);
 
-      // Case: the backend returns an object with numeric keys instead of an array
       let data: Booking[] = [];
 
-      // Detect and fix weird "object with numeric keys"
       if (
         response &&
         typeof response === "object" &&
@@ -131,8 +130,17 @@ const Bookings: React.FC = () => {
                 key={booking._id}
                 onClick={() => navigate(`/booking/${booking._id}`)}
                 whileHover={{ scale: 1.05 }}
-                className="cursor-pointer bg-white shadow-lg rounded-xl p-5 w-64 border border-gray-100 hover:shadow-2xl transition-all"
+                className={`relative cursor-pointer bg-white shadow-lg rounded-xl p-5 w-64 border border-gray-100 hover:shadow-2xl transition-all ${
+                  booking.isCancelled ? "opacity-70" : ""
+                }`} // 🆕 slight fade if cancelled
               >
+                {/* 🆕 Cancelled tag */}
+                {booking.isCancelled && (
+                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+                    Cancelled
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 mb-3">
                   <Film className="w-6 h-6 text-purple-600" />
                   <h3 className="text-lg font-semibold text-gray-800 truncate">
@@ -147,7 +155,6 @@ const Bookings: React.FC = () => {
                   </span>
                 </div>
 
-                {/* 🆔 Booking ID */}
                 <div className="text-xs text-gray-400 mt-1 break-all">
                   ID: {booking._id}
                 </div>
